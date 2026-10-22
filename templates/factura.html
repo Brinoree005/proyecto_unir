@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura - {{ reg.referencia }}</title>
+    <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css?v=3" rel="stylesheet">
+</head>
+<body class="bg-gray-200 text-gray-800 p-4 sm:p-8 font-sans">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded shadow-lg border border-gray-300">
+        
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-600">UNIR S.A.</h1>
+                <p class="text-sm text-gray-500">Servicios Públicos</p>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold text-gray-700">FACTURA</p>
+                <p class="text-sm text-gray-500">Nº {{ reg.id }}</p>
+            </div>
+        </div>
+
+        <div class="mb-6 grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm font-bold text-gray-500 uppercase">Facturado a:</p>
+                <p class="font-bold text-lg">{{ reg.nombre }}</p>
+                <p class="text-gray-700">Referencia: {{ reg.referencia }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-bold text-gray-500 uppercase">Fecha de emisión:</p>
+                <p class="font-bold text-gray-800">{{ reg.fecha }}</p>
+            </div>
+        </div>
+
+        <table class="w-full text-left border-collapse mb-8">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-4 border">Descripción del Servicio</th>
+                    <th class="py-3 px-4 border text-center">Consumo</th>
+                    <th class="py-3 px-4 border text-right">Tarifa Unitaria</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700 text-sm font-light">
+                <tr class="border-b border-gray-200">
+                    <td class="py-3 px-4 font-bold">{% if reg.servicio == 'Agua' %}💧{% else %}⚡{% endif %} Servicio de {{ reg.servicio }}</td>
+                    <td class="py-3 px-4 text-center">{{ reg.consumo }} {% if reg.servicio == 'Agua' %}m³{% else %}kWh{% endif %}</td>
+                    <td class="py-3 px-4 text-right">
+                        {% if reg.servicio == 'Agua' %}
+                            ${{ t_agua }} / m³
+                        {% else %}
+                            ${{ t_energia }} / kWh
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="flex justify-end mb-8">
+            <div class="w-1/2 bg-gray-50 p-4 rounded text-right border border-gray-200">
+                <p class="text-sm font-bold text-gray-500 uppercase">Total a Pagar</p>
+                <p class="text-3xl font-bold text-green-600">${{ "{:,.2f}".format(reg.total) }}</p>
+            </div>
+        </div>
+
+        <div class="text-center text-gray-400 text-sm border-t pt-4">
+            <p>Gracias por su pago oportuno.</p>
+            <!-- Este botón se oculta al imprimir gracias a la clase print:hidden -->
+            <button onclick="window.print()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded print:hidden">
+                🖨️ Imprimir Factura
+            </button>
+        </div>
+    </div>
+</body>
+</html>
