@@ -1,54 +1,68 @@
 from flask import Flask, render_template, request, redirect, url_for
+import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 
-# --- Parámetros del Sistema (Requerimientos 4 y 5) ---
-TARIFA_ENERGIA = 536
-TARIFA_AGUA = 730
+# Tarifas fijas
+TARIFA_ENERGIA = 536  # $ / kWh
+TARIFA_AGUA = 730     # $ / m3
 
-# Base de datos simulada en memoria (para el prototipo)
 registros = []
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
+def home():
     error = None
     if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        referencia = request.form.get('referencia')
-        servicio = request.form.get('servicio')
-        consumo_str = request.form.get('consumo')
-
         try:
-            # Requerimiento 3: Validar que sea numérico
-            consumo = float(consumo_str)
-            
-            # Requerimiento 1: Cálculo
-            if servicio == 'Agua':
-                total = consumo * TARIFA_AGUA
-            else:
+            nombre = request.form.get('nombre')
+            referencia = request.form.get('referencia')
+            servicio = request.form.get('servicio')
+            consumo = float(request.form.get('consumo'))
+
+            # Bloqueo estricto de valores negativos en el servidor
+            if consumo < 0:
+                raise ValueError("El consumo no puede ser negativo.")
+
+            if servicio == 'Energía':
                 total = consumo * TARIFA_ENERGIA
-                
-            # Guardar el registro
+            else:
+                total = consumo * TARIFA_AGUA
+
             registros.append({
+                'id': str(uuid.uuid4())[:8], # Genera un ID único para la factura
+                'fecha': datetime.now().strftime("%Y-%m-%d"),
                 'nombre': nombre,
                 'referencia': referencia,
                 'servicio': servicio,
                 'consumo': consumo,
                 'total': total
             })
-            return redirect(url_for('index'))
-            
-        except ValueError:
-            error = "El consumo debe ser un número válido."
+        except ValueError as ve:
+            error = str(ve)
+        except Exception as e:
+            error = f'Error en los datos ingresados: {str(e)}'
 
-    return render_template('index.html', registros=registros, 
-                           t_agua=TARIFA_AGUA, t_energia=TARIFA_ENERGIA, error=error)
+    return render_template(
+        'index.html',
+        registros=registros,
+        t_energia=TARIFA_ENERGIA,
+        t_agua=TARIFA_AGUA,
+        error=error
+    )
+
+@app.route('/factura/<id>')
+def factura(id):
+    # Busca el registro por su ID para generar la factura
+    registro = next((r for r in registros if r['id'] == id), None)
+    if not registro:
+        return "Factura no encontrada", 404
+    return render_template('factura.html', reg=registro, t_energia=TARIFA_ENERGIA, t_agua=TARIFA_AGUA)
 
 @app.route('/limpiar')
 def limpiar():
     registros.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    # El host '0.0.0.0' permite que la app sea visible en tu red local
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)
